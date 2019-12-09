@@ -72,27 +72,41 @@ int main(){
   }
 
 
+  char p[3] = ".p";
+  char * pass = p;
 
   gth_start_game(GTH_WHO_BLACK, lh, 0);
 
 
   int rand_pick = 0;
 
-  while(gth_winner == 0)
+  while(1)
   {
-    rand_pick = rand()%25;
-    if(locations.count(rand_pick))
-    {
-      try{
-        locations.erase(rand_pick);
-        current_location = const_cast <char *>( int_to_location(rand_pick).c_str() );
-        gth_make_move(current_location);
-        gth_get_move(current_location);
-        locations.erase(location_to_int(current_location));
-      }catch(int x) {
-        cout << "error" << endl;
-      }
+    try {
+      rand_pick = rand()%25;
+      if(locations.count(rand_pick))
+      {
 
+          locations.erase(rand_pick);
+          current_location = const_cast <char *>( int_to_location(rand_pick).c_str() );
+
+          if(gth_make_move(current_location) == 0)
+          {
+            gth_get_move(current_location);
+            locations.erase(location_to_int(current_location));
+          }
+          else if(gth_make_move(current_location) == -1)
+          {
+            gth_make_move(pass);
+            cout << pass << endl;
+            gth_get_move(current_location);
+            locations.erase(location_to_int(current_location));
+          }
+      }
+    }
+    catch (char * error)
+    {
+      cout << "Errors: " << error << endl;
     }
   }
 
