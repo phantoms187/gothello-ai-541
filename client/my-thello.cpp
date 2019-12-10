@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <ctype.h> 
+#include <ctype.h>
 
 
 using namespace std;
@@ -35,7 +35,7 @@ string int_to_location(int location, vector<string> labels)
   }
   return "failed";
 }
-//Display current locations on game board for debugging 
+//Display current locations on game board for debugging
 int display_remaining_locations( set <int, greater<int> > locations)
 {
   for(auto i = locations.begin(); i != locations.end(); ++i)
@@ -54,6 +54,11 @@ bool illegal_move(int location,  set <int, greater<int> > locations)
     return false;
 }
 
+bool was_my_move(int location, set<int, greater<int> > my_moves)
+{
+  return my_moves.count(location);
+}
+
 
 int main(int argc, char** argv){
 //Seed for random variable
@@ -67,7 +72,7 @@ int main(int argc, char** argv){
                         "a4", "b4", "c4", "d4", "e4",
                         "a5", "b5", "c5", "d5", "e5",
                       };
-//Assign to start game as chossen side  
+//Assign to start game as chossen side
   if( strcmp(argv[1],"black") == 0 )
    side = GTH_WHO_BLACK;
   else
@@ -80,6 +85,9 @@ int main(int argc, char** argv){
   char * pass = p;
 //Set of locations to know which places have been called
   set <int, greater<int> > locations;
+  set <int, greater<int> > my_moves;
+  vector<int> opponent_moves;
+
   for(int j = 0; j < 25; ++j )
   {
     locations.insert(j);
@@ -91,7 +99,7 @@ int main(int argc, char** argv){
   int rand_pick = 0;
   int weighted_guess = 0;
 
-  while(1)
+  while(gth_winner == 0)
   {
     //First round of moves, choose the center placement
       if( weighted_guess == 0)
@@ -112,21 +120,23 @@ int main(int argc, char** argv){
         //If move is accepted by server
           if(gth_make_move(current_location) == 0)
           {
+            my_moves.insert(rand_pick);
             //Get move from opponent and remove that from possible choices
             gth_get_move(current_location);
             locations.erase(location_to_int(current_location, labels));
           }
-          else 
-          {//Otherwise pass on turn and collect opponent's move
-            gth_make_move(pass);
-            gth_get_move(current_location);
-            locations.erase(location_to_int(current_location, labels));
-          }
+
+      }
+      else
+      {//Otherwise pass on turn and collect opponent's move
+        gth_make_move(pass);
+        gth_get_move(current_location);
+        locations.erase(location_to_int(current_location, labels));
       }
       //Increment weighted guess to next location in X pattern
       weighted_guess += 4;
   }
-  
+
 
 
   cout << "Team Black" << endl;
