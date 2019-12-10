@@ -10,14 +10,9 @@
 using namespace std;
 
 
-int location_to_int(string location)
+int location_to_int(string location, vector<string> locations)
 {
-  vector<string> locations {  "a1", "b1", "c1", "d1", "e1",
-                        "a2", "b2", "c2", "d2", "e2",
-                        "a3", "b3", "c3", "d3", "e3",
-                        "a4", "b4", "c4", "d4", "e4",
-                        "a5", "b5", "c5", "d5", "e5",
-                      };
+
   for(int i = 0; i < locations.size(); ++i)
   {
     if( locations[i] == location)
@@ -28,14 +23,9 @@ int location_to_int(string location)
   return -1;
 }
 
-string int_to_location(int location)
+string int_to_location(int location, vector<string> locations)
 {
-  vector<string> locations {  "a1", "b1", "c1", "d1", "e1",
-                        "a2", "b2", "c2", "d2", "e2",
-                        "a3", "b3", "c3", "d3", "e3",
-                        "a4", "b4", "c4", "d4", "e4",
-                        "a5", "b5", "c5", "d5", "e5",
-                      };
+
   for(int i = 0; i < locations.size(); ++i)
   {
     if( i == location)
@@ -59,6 +49,13 @@ int display_remaining_locations(vector<int> locations)
 
 int main(){
 
+  vector<string> alpha_locations {  "a1", "b1", "c1", "d1", "e1",
+                        "a2", "b2", "c2", "d2", "e2",
+                        "a3", "b3", "c3", "d3", "e3",
+                        "a4", "b4", "c4", "d4", "e4",
+                        "a5", "b5", "c5", "d5", "e5",
+                      };
+
   srand(time(0));
 
   char * current_location;
@@ -72,7 +69,7 @@ int main(){
   }
 
 
-  char p[3] = ".p";
+  char p[] = ".p";
   char * pass = p;
 
   gth_start_game(GTH_WHO_BLACK, lh, 0);
@@ -82,33 +79,28 @@ int main(){
 
   while(1)
   {
-    try {
-      rand_pick = rand()%25;
-      if(locations.count(rand_pick))
-      {
+    if(gth_winner != 0)
+      break;
 
-          locations.erase(rand_pick);
-          current_location = const_cast <char *>( int_to_location(rand_pick).c_str() );
+    rand_pick = rand()%25;
+    current_location = const_cast <char *>( int_to_location(rand_pick, alpha_locations).c_str() );
 
-          if(gth_make_move(current_location) == 0)
-          {
-            gth_get_move(current_location);
-            locations.erase(location_to_int(current_location));
-          }
-          else if(gth_make_move(current_location) == -1)
-          {
-            gth_make_move(pass);
-            cout << pass << endl;
-            gth_get_move(current_location);
-            locations.erase(location_to_int(current_location));
-          }
-      }
-    }
-    catch (char * error)
+    if(locations.count(rand_pick) && !gth_make_move(current_location))
     {
-      cout << "Errors: " << error << endl;
+        locations.erase(rand_pick);
+        gth_get_move(current_location);
+        locations.erase(location_to_int(current_location, alpha_locations));
+    }
+    else
+    {
+        if( gth_make_move(pass) == 0 )
+        {
+            gth_get_move(current_location);
+            locations.erase(location_to_int(current_location, alpha_locations));
+        }
     }
   }
+
 
 
   cout << "Team Black" << endl;
