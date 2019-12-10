@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <ctype.h> 
+
 
 using namespace std;
 
@@ -57,13 +59,22 @@ int display_remaining_locations(vector<int> locations)
 }
 
 
-int main(){
+int main(int argc, char** argv){
 
   srand(time(0));
+  enum gth_who side;
+  
+
+  if( strcmp(argv[1],"black") == 0 )
+   side = GTH_WHO_BLACK;
+  else
+   side = GTH_WHO_WHITE;
 
   char * current_location;
   char  local[] = "localhost";
   char * lh = local;
+  char p[3] = ".p";
+  char * pass = p;
 
   set <int, greater<int> > locations;
   for(int j = 0; j < 25; ++j )
@@ -71,11 +82,7 @@ int main(){
     locations.insert(j);
   }
 
-
-  char p[3] = ".p";
-  char * pass = p;
-
-  gth_start_game(GTH_WHO_BLACK, lh, 0);
+  gth_start_game(side, lh, 0);
 
 
   int rand_pick = 0;
