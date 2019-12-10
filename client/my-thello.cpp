@@ -48,15 +48,71 @@ int display_remaining_locations( set <int, greater<int> > locations)
 //Determine if the chosen location is currently surrounded on all sides
 bool illegal_move(int location,  set <int, greater<int> > locations)
 {
-  if( ( locations.count(location + 1) + locations.count(location - 1) + locations.count(location + 5) + locations.count(location - 5)) == 0 )
+  if(
+    (( locations.count(location + 1) +
+      locations.count(location - 1) +
+      locations.count(location + 5) +
+      locations.count(location - 5) ) == 0 ) )
     return true;
   else
     return false;
 }
 
-bool was_my_move(int location, set<int, greater<int> > my_moves)
+int current_score(int board[])
 {
-  return my_moves.count(location);
+  int zero_sum = 0;
+  for(int j = 0; j < 25; ++j )
+  {
+    if( board[j] == 1)
+      ++zero_sum;
+    if( board[j] == 2)
+      --zero_sum;
+  }
+  return zero_sum;
+}
+
+
+int minimax(int board[], int depth, bool isMax)
+{
+  int score = current_score(board);
+  int empty = 0;
+  for(int i = 0; i < 25; ++i)
+  {
+    if(board[i] == 0)
+      ++empty;
+  }
+  if(empty)
+    return -99996;
+
+  if(isMax)
+  {
+    int best = -9999;
+    for(int i = 0; i < 25; ++i)
+    {
+      if(board[i] == 0)
+      {
+        board[i] = 1;
+        best = max(best, minimax(board, depth + 1, !isMax));
+      }
+      board[i] = 0;
+    }
+    return best;
+  }
+  else
+  {
+    int best = 9999;
+    for(int i = 0; i < 25; ++i)
+    {
+      if(board[i] == 0)
+      {
+        board[i] = 2;
+        best = min(best, minimax(board, depth + 1, !isMax));
+      }
+      board[i] = 0;
+    }
+    return best;
+
+  }
 }
 
 
@@ -85,12 +141,11 @@ int main(int argc, char** argv){
   char * pass = p;
 //Set of locations to know which places have been called
   set <int, greater<int> > locations;
-  set <int, greater<int> > my_moves;
-  vector<int> opponent_moves;
-
+  int board[25];
   for(int j = 0; j < 25; ++j )
   {
     locations.insert(j);
+    board[j] = 0;
   }
 //Call to start game
   gth_start_game(side, lh, 0);
@@ -101,32 +156,53 @@ int main(int argc, char** argv){
 
   while(gth_winner == 0)
   {
-    //First round of moves, choose the center placement
-      if( weighted_guess == 0)
-        rand_pick = 12;
-    //Otherwise choose positions in an X pattern
-      else if(weighted_guess < 25)
-        rand_pick = weighted_guess;
-      else
-    //Finally choose randomly and hope for the best
+    int best_value = -9999;
+    int last_move = -1;
+    int move = -1;
+
+    for(int i = 0; i < 25; ++i)
+    {
+      int oldVal = current_score(board);
+      board[i] = 1;
+      int newVal = minimax(board, 0, true);
+      if(newVal > best_value)
+        move = i;
+    }
+
+    if(move == last_move)
+    {
         rand_pick = rand()%25;
+        last_move = rand_pick;
+    }
+    else
+    {
+      rand_pick = move;
+      last_move = rand_pick;
+    }
+
+
+      cout << "move: " << rand_pick << endl;
     //If the current move location hasn't been played and the move is legal
-      if( locations.count(rand_pick) && !illegal_move(rand_pick, locations) )
+      if( locations.count(rand_pick) )
       {
-        //Remove pick from available choices
-          locations.erase(rand_pick);
-        //Set current choice to char pointer after converting to string location value
+        if(!illegal_move(rand_pick, locations))
+        {
+          //Set current choice to char pointer after converting to string location value
           current_location = const_cast <char *>( int_to_location(rand_pick, labels).c_str() );
-        //If move is accepted by server
+          //If move is accepted by server
           if(gth_make_move(current_location) == 0)
           {
-            my_moves.insert(rand_pick);
+            //Remove pick from available choices
+            locations.erase(rand_pick);
+            board[rand_pick] = 1;
             //Get move from opponent and remove that from possible choices
             gth_get_move(current_location);
             locations.erase(location_to_int(current_location, labels));
+            board[location_to_int(current_location, labels)] = 2;
           }
+        }
 
-      }
+
       else
       {//Otherwise pass on turn and collect opponent's move
         gth_make_move(pass);
@@ -134,7 +210,9 @@ int main(int argc, char** argv){
         locations.erase(location_to_int(current_location, labels));
       }
       //Increment weighted guess to next location in X pattern
-      weighted_guess += 4;
+
+    }
+    weighted_guess += 4;
   }
 
 
